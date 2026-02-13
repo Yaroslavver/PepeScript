@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleScript — свой язык программирования</title>
+    <style>
+        /* ТЁМНЫЙ ДИЗАЙН КАК В VS CODE (ПОЛНОСТЬЮ ВОССТАНОВЛЕН) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: linear-gradient(145deg, #0B1926 0%, #1A2C3D 100%);
+            padding: 24px;
+            min-height: 100vh;
+            color: #E6F1FF;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        /* Карточки редактора и вывода */
+        .editor-card, .output-card {
+            background: #1E2A3A;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 1px solid #2D3F4F;
+            backdrop-filter: blur(10px);
+        }
+
+        h2 {
+            color: #9FD9F2;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h2::before {
+            content: '▶';
+            color: #6BBF59;
+            font-size: 16px;
+        }
+
+        /* Редактор кода */
+        #code-editor {
+            width: 100%;
+            height: 450px;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 15px;
+            line-height: 1.6;
+            padding: 20px;
+            background: #0F1A24;
+            color: #E6F1FF;
+            border: 2px solid #2D4A5C;
+            border-radius: 12px;
+            resize: vertical;
+            outline: none;
+            transition: all 0.3s;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        #code-editor:focus {
+            border-color: #6BBF59;
+            box-shadow: inset 0 4px 12px rgba(107,191,89,0.1);
+        }
+
+        #code-editor::placeholder {
+            color: #5A7387;
+        }
+
+        /* Кнопки управления */
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-run {
+            background: #6BBF59;
+            color: #0F1A24;
+            flex: 2;
+        }
+
+        .btn-clear {
+            background: #E66A5C;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-example {
+            background: #F7D44A;
+            color: #0F1A24;
+            flex: 1;
+        }
+
+        .btn-toggle {
+            background: #2D4A5C;
+            color: white;
+            width: 100%;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            filter: brightness(1.1);
+        }
+
+        /* Область вывода */
+        .output-container {
+            background: #0F1A24;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 450px;
+            max-height: 450px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            border: 2px solid #2D4A5C;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .output-line {
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid #4F9FDA;
+            animation: fadeIn 0.3s;
+        }
+
+        .output-line.success {
+            border-left-color: #6BBF59;
+            color: #B8E6A8;
+        }
+
+        .output-line.error {
+            border-left-color: #E66A5C;
+            background: rgba(230,106,92,0.1);
+            color: #FFB3AA;
+        }
+
+        .output-line.warning {
+            border-left-color: #F7D44A;
+            color: #FFE48F;
+        }
+
+        /* Транспилированный код */
+        .transpiled-section {
+            margin-top: 20px;
+            border-top: 2px solid #2D4A5C;
+            padding-top: 20px;
+        }
+
+        .transpiled-section pre {
+            background: #0F1A24;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            color: #B4D9E6;
+            border: 1px solid #2D4A5C;
+            margin-top: 12px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Подсказка снизу */
+        .hint {
+            margin-top: 20px;
+            color: #8AA5B9;
+            font-size: 13px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .hint span {
+            background: #2D4A5C;
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: #E6F1FF;
+        }
+
+        /* Стили для подсветки */
+    .hl-keyword { color: #569CD6; font-weight: bold; }
+    .hl-string { color: #CE9178; }
+    .hl-number { color: #B5CEA8; }
+    .hl-comment { color: #6A9955; }
+    .hl-bracket { color: #FFD700; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Левая колонка: редактор -->
+        <div class="editor-card">
+            <h2>📝 Редактор PepeScript</h2>
+            <div style="position: relative; width: 100%; height: 450px;">
+    
+    <!-- ЭЛЕМЕНТ 1: Подсветка (DIV) - видимый, но нередактируемый -->
+    <div id="highlight-layer" style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 15px;
+        line-height: 1.6;
+        background: #0F1A24;
+        color: #E6F1FF;
+        border: 2px solid #2D4A5C;
+        border-radius: 12px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-y: auto;
+        pointer-events: none;  /* НЕЛЬЗЯ КЛИКАТЬ - всё пропускает вниз */
+        z-index: 2;
+            background: url(https://avatars.mds.yandex.net/i?id=940b4a240538b1d30d75bd77c5c6f06d09228a31-4566264-images-thumbs&n=13);
+    background-repeat: repeat-x;
+    "></div>
+           <!-- ЭЛЕМЕНТ 2: Редактор (TEXTAREA) - невидимый, но редактируемый -->
+    <textarea id="code-editor" style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 15px;
+        line-height: 1.6;
+        background: transparent;  /* ПРОЗРАЧНЫЙ - видно подсветку */
+        color: transparent;       /* ТЕКСТ НЕВИДИМЫЙ - видно подсветку */
+        caret-color: white;      /* КУРСОР БЕЛЫЙ - видно */
+        border: 2px solid #2D4A5C;
+        border-radius: 12px;
+        resize: vertical;
+        outline: none;
+        z-index: 3;
+    "></textarea></div>
+            
+            <div class="controls">
+                <button class="btn btn-run" onclick="window.simpleScript.run()">
+                    <span>▶</span> Запустить
+                </button>
+                <button class="btn btn-clear" onclick="window.simpleScript.clearOutput()">
+                    <span>🗑</span> Очистить
+                </button>
+                <button class="btn btn-example" onclick="window.simpleScript.loadExample()">
+                    <span>📋</span> Пример
+                </button>
+            </div>
+            
+            <button class="btn btn-toggle" onclick="window.simpleScript.toggleTranspiled()">
+                <span>🔧</span> Показать JavaScript код
+            </button>
+            
+            <div id="transpiled" class="transpiled-section hidden">
+                <h3 style="color: #9FD9F2; margin-bottom: 8px;">⚡ Скомпилированный JavaScript:</h3>
+                <pre id="transpiled-code-content"></pre>
+            </div>
+            
+            <div class="hint">
+                <span>квакать() 📌 вывести</span>
+                <span>📌 пепе x = 5</span>
+                <span>📌 пепе x</span>
+                <span>аще() { } 📌 если</span>
+                <span>инако() { }📌 иначе</span>
+                <span>повторить(n) { } 📌 повторить n раз</span>
+                <span>дондеже() { } 📌 пока</span>
+                <span>суть 📌 = (сравнение)</span>
+                <span>не суть 📌 не= (!==)</span>
+                <span>указ 📌 функция</span>
+                <span>жребий() 📌 случайное</span>
+            </div>
+        </div>
+        
+        <!-- Правая колонка: вывод -->
+        <div class="output-card">
+            <h2>📟 Результат выполнения</h2>
+            <div id="output" class="output-container">
+                <div class="output-line success">✓ Готов к выполнению</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================== ИСПРАВЛЕННЫЙ ТРАНСПАЙЛЕР ==================
+        class SimpleScriptTranspiler {
+            constructor() {
+                // Словарь ТОЛЬКО для ключевых слов (без операторов!)
+                this.keywords = new Map([
+                    ['квакать', 'console.log'],
+                    ['константа', 'const'],
+                    ['указ', 'function'],
+                    ['вернуть', 'return'],
+                    ['истина', 'true'],
+                    ['ложь', 'false'],
+                    ['ничто', 'null'],
+                    ['неопределено', 'undefined'],
+                    ['не суть', '!='],
+                    ['суть', '='],                    
+                    // Методы массивов
+                    ['длина', 'length'],
+                    ['добавить', 'push'],
+                    ['удалить', 'pop'],
+                    ['первый', 'shift'],
+                    ['последний', 'pop'],
+                    // Математика
+                    ['округлить', 'Math.round'],
+                    ['жребий', 'Math.random'],
+                    ['целое', 'parseInt'],
+                    ['дробное', 'parseFloat']
+                ]);
+
+                // Паттерны с ПРАВИЛЬНЫМИ скобками и защитой от конфликтов
+                this.patterns = [
+                    // 1. печать("текст") → console.log("текст")
+                    {
+                        regex: /квакать\s*\(([^)]*)\)/g,
+                        replace: 'console.log($1)'
+                    },
+                    // 2. повторить(N) { ... } → for(let i=0; i<N; i++) { ... }
+                    {
+                        regex: /повторить\s*\((\d+)\)\s*{([^}]*)}/g,
+                        replace: (match, count, body) => 
+                            `for(let i = 0; i < ${count}; i++) { ${body} }`
+                    },
+                    // 3. пока(условие) { ... } → while(условие) { ... }
+                    {
+                        regex: /дондеже\s*\(([^)]+)\)\s*{([^}]*)}/g,
+                        replace: (match, condition, body) => {
+                            let fixedCondition = this.replaceComparisons(condition);
+                            return `while(${fixedCondition}) { ${body} }`;
+                        }
+                    },
+                    // 4. если(условие) { ... } → if(условие) { ... }
+                    {
+                        regex: /аще\s*\(([^)]+)\)\s*{([^}]*)}/g,
+                        replace: (match, condition, body) => {
+                            let fixedCondition = this.replaceComparisons(condition);
+                            return `if(${fixedCondition}) { ${body} }`;
+                        }
+                    },
+                    // 5. иначе { ... } → else { ... }
+                    {
+                        regex: /инако\s*{([^}]*)}/g,
+                        replace: 'else { $1 }'
+                    },
+                    // 6. функция имя(параметры) { ... } → function имя(параметры) { ... }
+                    {
+                        regex: /указ\s+(\w+)\s*\(([^)]*)\)\s*{([^}]*)}/g,
+                        replace: 'function $1($2) { $3 }'
+                    }
+                ];
+            }
+
+            // Замена операторов сравнения ТОЛЬКО внутри условий
+            replaceComparisons(expr) {
+                return expr
+                    .replace(/не=/g, '!==')   // сначала длинный оператор
+                    .replace(/=/g, '==')
+                    .replace(/<==/g, '<=')
+                    .replace(/>==/g, '>=');    // затем простой "="
+            }
+
+            // Замена объявлений переменных (работает с и без инициализации)
+            replaceVariableDeclaration(line) {
+                // переменная x = 5   →   let x = 5
+                // переменная x       →   let x
+                const varRegex = /пепе\s+([a-zA-Zа-яА-ЯёЁ_][a-zA-Zа-яА-ЯёЁ0-9_]*)(?:\s*=\s*(.*?))?(?:\s*;)?$/;
+                return line.replace(varRegex, (match, name, value) => {
+                    if (value !== undefined) {
+                        return `let ${name} = ${value}`;
+                    } else {
+                        return `let ${name}`;
+                    }
+                });
+            }
+
+            // Универсальная замена ключевых слов с поддержкой кириллицы
+            replaceKeywords(text) {
+                let result = text;
+                for (let [rus, js] of this.keywords) {
+                    // Свои границы слова для кириллицы: перед словом — начало строки или не буква/цифра/_
+                    // после слова — конец строки или не буква/цифра/_
+                    const regex = new RegExp(
+                        `(^|[^a-zA-Zа-яА-ЯёЁ0-9_])${rus}(?=[^a-zA-Zа-яА-ЯёЁ0-9_]|$)`,
+                        'g'
+                    );
+                    result = result.replace(regex, `$1${js}`);
+                }
+                return result;
+            }
+
+            // Главный метод транспиляции
+            transpile(code) {
+                if (!code || code.trim() === '') return '';
+
+                let output = code;
+
+                // 1. Сначала обрабатываем сложные паттерны (если, пока, повторить...)
+                for (let pattern of this.patterns) {
+                    output = output.replace(pattern.regex, pattern.replace);
+                }
+
+                // 2. Разбиваем на строки для построчной обработки
+                const lines = output.split('\n');
+                const processedLines = [];
+
+                for (let line of lines) {
+                    let processed = line;
+
+                    // 3. Специальная обработка "переменная"
+                    if (processed.includes('пепе')) {
+                        processed = this.replaceVariableDeclaration(processed);
+                    }
+
+                    // 4. Замена остальных ключевых слов (с кириллическими границами)
+                    processed = this.replaceKeywords(processed);
+
+                    processedLines.push(processed);
+                }
+
+                output = processedLines.join('\n');
+
+                // 5. Финальная чистка синтаксиса
+                output = this.fixSyntax(output);
+                return output;
+            }
+
+            // Чистка лишних точек с запятой и форматирование
+            fixSyntax(code) {
+                let fixed = code;
+                // Убираем двойные ;;
+                fixed = fixed.replace(/;;/g, ';');
+                // Добавляем ; в концах строк, где нужно
+                fixed = fixed.replace(/([^;{}])\n(?!\s*[{}])/g, '$1;\n');
+                fixed = fixed.replace(/([^;])\s*\n\s*\}/g, '$1;\n}');
+                return fixed;
+            }
+        }
+
+        // ================== ИНТЕРПРЕТАТОР ==================
+        class SimpleScriptInterpreter {
+            constructor() {
+                this.transpiler = new SimpleScriptTranspiler();
+            }
+
+            execute(code) {
+                try {
+                    const jsCode = this.transpiler.transpile(code);
+                    const sandbox = this.createSandbox();
+                    const func = new Function('sandbox', `
+                        with(sandbox) {
+                            ${jsCode}
+                        }
+                        return sandbox._output;
+                    `);
+                    const result = func(sandbox);
+                    return {
+                        success: true,
+                        output: result || [],
+                        jsCode,
+                        error: null
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        output: [],
+                        jsCode: this.transpiler.transpile(code),
+                        error: error.message
+                    };
+                }
+            }
+
+            createSandbox() {
+                const output = [];
+                const sandbox = {
+                    console: {
+                        log: (...args) => {
+                            const message = args.map(arg => 
+                                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+                            ).join(' ');
+                            output.push({ type: 'log', message });
+                        }
+                    },
+                    _output: output,
+                    Array, Object, String, Number, Boolean, Math, JSON, Date, RegExp
+                };
+                return sandbox;
+            }
+        }
+
+        // ================== UI КОНТРОЛЛЕР ==================
+        class SimpleScriptUI {
+            constructor() {
+                this.interpreter = new SimpleScriptInterpreter();
+                this.editor = document.getElementById('code-editor');
+                this.outputContainer = document.getElementById('output');
+                this.transpiledContent = document.getElementById('transpiled-code-content');
+                this.transpiledSection = document.getElementById('transpiled');
+                window.simpleScript = this;
+                
+                // Показываем приветственное сообщение
+                this.clearOutput();
+                this.addOutputLine('✓ Готов к кваканью', 'success');
+            }
+
+            run() {
+                const code = this.editor.value;
+                const result = this.interpreter.execute(code);
+                
+                this.transpiledContent.textContent = result.jsCode || '// Пустой код';
+                this.clearOutput();
+
+                if (result.success) {
+                    if (result.output.length) {
+                        result.output.forEach(item => 
+                            this.addOutputLine(item.message, 'success')
+                        );
+                    } else {
+                        this.addOutputLine('✓ Код выполнен успешно', 'success');
+                    }
+                } else {
+                    this.addOutputLine(`❌ Лягушка сломалась: ${result.error}`, 'error');
+                    this.addOutputLine('💡 Проверьте синтаксис, скобки и запасы лягушек', 'warning');
+                }
+            }
+
+            addOutputLine(message, type = 'log') {
+                const line = document.createElement('div');
+                line.className = `output-line ${type}`;
+                let icon = '•';
+                if (type === 'success') icon = '🐸';//'✓';
+                if (type === 'error') icon = "❌";//✗';
+                if (type === 'warning') icon = '⚠';
+                line.textContent = `${icon} ${message}`;
+                this.outputContainer.appendChild(line);
+                line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            clearOutput() {
+                this.outputContainer.innerHTML = '';
+            }
+
+            loadExample() {
+                this.editor.value = `квакать("Привет, мир!")
+
+пепе имя = "Пепе"
+аще(имя суть "Пепе") {
+  квакать("Привет, " + имя + "!")
+}
+
+// Присваивание без инициализации
+пепе x
+x = 42
+квакать("x = " + x)
+
+// Циклы
+повторить(3) {
+  квакать("Раз!")
+}
+
+пепе i = 1
+дондеже(i <= 3) {
+  квакать("i = " + i)
+  i = i + 1
+}`;
+                highlightCode();
+                this.run();
+            }
+
+            toggleTranspiled() {
+                this.transpiledSection.classList.toggle('hidden');
+            }
+            
+        }
+
+        // Запуск при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            new SimpleScriptUI();
+        });
+
+
+
+        // ========== ПРОСТЕЙШАЯ ПОДСВЕТКА ==========
+    function highlightCode() {
+        const textarea = document.getElementById('code-editor');
+        const highlight = document.getElementById('highlight-layer');
+        
+        // Берём код из textarea
+        let code = textarea.value;
+        
+        // ПОДСВЕЧИВАЕМ (5 правил - достаточно)
+        let highlighted = code
+            // 1. Ключевые слова (синие)
+            .replace(/\b(квакать|переменная|константа|аще|инако|дондеже|повторить|указ|вернуть|истина|ложь|ничто)\b/g, 
+                '<span style="color: #569CD6; font-weight: bold;">$1</span>')
+            
+            // 2. Строки (оранжевые)
+            .replace(/"([^"]*)"/g, 
+                '<span style="color: #CE9178;">"$1"</span>')
+            
+            // 3. Числа (зелёные)
+            .replace(/\b(\d+)\b/g, 
+                '<span style="color: #B5CEA8;">$1</span>')
+            
+            // 4. Комментарии (серо-зелёные)
+            .replace(/\/\/(.*)/g, 
+                '<span style="color: #6A9955;">//$1</span>')
+            
+            // 5. Скобки (жёлтые)
+            .replace(/([{}()[\]])/g, 
+                '<span style="color: #FFD700;">$1</span>');
+        
+        // Вставляем подсвеченный код в DIV
+        highlight.innerHTML = highlighted;
+    }
+    
+    // ========== АВТОМАТИЧЕСКАЯ ПОДСВЕТКА ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const textarea = document.getElementById('code-editor');
+        
+        // Подсвечиваем при загрузке
+        highlightCode();
+        
+        // Подсвечиваем при каждом вводе
+        textarea.addEventListener('input', highlightCode);
+        textarea.addEventListener('scroll', function() {
+            // Синхронизируем скролл
+            document.getElementById('highlight-layer').scrollTop = this.scrollTop;
+        });
+    });
+    </script>
+</body>
+</html>
