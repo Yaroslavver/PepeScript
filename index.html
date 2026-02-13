@@ -234,8 +234,8 @@
             <h2>📝 Редактор PepeScript</h2>
             <div style="position: relative; width: 100%; height: 450px;">
     
-    <!-- ЭЛЕМЕНТ 1: Подсветка (DIV) - видимый, но нередактируемый -->
-    <div id="highlight-layer" style="
+    <!-- ЭЛЕМЕНТ 0: фон -->
+    <div id="bg-layer" style="
         position: absolute;
         top: 0;
         left: 0;
@@ -255,7 +255,30 @@
         pointer-events: none;  /* НЕЛЬЗЯ КЛИКАТЬ - всё пропускает вниз */
         z-index: 2;
             background: url(https://avatars.mds.yandex.net/i?id=940b4a240538b1d30d75bd77c5c6f06d09228a31-4566264-images-thumbs&n=13);
-    background-repeat: repeat-x;
+    background-repeat: repeat;
+    opacity:40%;
+    "></div>
+    <!-- ЭЛЕМЕНТ 1: Подсветка (DIV) - видимый, но нередактируемый -->
+    <div id="highlight-layer" style="
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 15px;
+        line-height: 1.6;
+        
+        color: #E6F1FF;
+        border: 2px solid #2D4A5C;
+        border-radius: 12px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-y: auto;
+        pointer-events: none;  /* НЕЛЬЗЯ КЛИКАТЬ - всё пропускает вниз */
+        z-index: 2;
+            
     "></div>
            <!-- ЭЛЕМЕНТ 2: Редактор (TEXTAREA) - невидимый, но редактируемый -->
     <textarea id="code-editor" style="
