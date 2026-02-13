@@ -257,6 +257,7 @@
             background: url(https://avatars.mds.yandex.net/i?id=940b4a240538b1d30d75bd77c5c6f06d09228a31-4566264-images-thumbs&n=13);
     background-repeat: repeat;
     opacity:40%;
+    filter: contrast(1.5);
     "></div>
     <!-- ЭЛЕМЕНТ 1: Подсветка (DIV) - видимый, но нередактируемый -->
     <div id="highlight-layer" style="
@@ -278,6 +279,7 @@
         overflow-y: auto;
         pointer-events: none;  /* НЕЛЬЗЯ КЛИКАТЬ - всё пропускает вниз */
         z-index: 2;
+        font-weight: bold;
             
     "></div>
            <!-- ЭЛЕМЕНТ 2: Редактор (TEXTAREA) - невидимый, но редактируемый -->
@@ -299,6 +301,7 @@
         resize: vertical;
         outline: none;
         z-index: 3;
+        font-weight: bold;
     "></textarea></div>
             
             <div class="controls">
@@ -662,19 +665,19 @@ x = 42
             
             // 2. Строки (оранжевые)
             .replace(/"([^"]*)"/g, 
-                '<span style="color: #CE9178;">"$1"</span>')
+                '<span style="color: #36d1ff;">"$1"</span>')
             
             // 3. Числа (зелёные)
             .replace(/\b(\d+)\b/g, 
-                '<span style="color: #B5CEA8;">$1</span>')
+                '<span style="color: #ffc100;">$1</span>')
             
             // 4. Комментарии (серо-зелёные)
             .replace(/\/\/(.*)/g, 
-                '<span style="color: #6A9955;">//$1</span>')
+                '<span style="color: #5ef71a;">//$1</span>')
             
             // 5. Скобки (жёлтые)
             .replace(/([{}()[\]])/g, 
-                '<span style="color: #FFD700;">$1</span>');
+                '<span style="color: #e279ff;">$1</span>');
         
         // Вставляем подсвеченный код в DIV
         highlight.innerHTML = highlighted;
